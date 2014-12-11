@@ -102,10 +102,10 @@
               $scope.colMenu = false;
             }
     
-            function handleClick(evt) {
+            function handleClick(event) {
               // If the shift key is being held down, add this column to the sort
               var add = false;
-              if (evt.shiftKey) {
+              if (event.shiftKey) {
                 add = true;
               }
     
@@ -136,11 +136,17 @@
             *
             */
 
-            if ( $scope.sortable || $scope.colMenu ){
+            if ($scope.sortable || $scope.colMenu) {
               // Long-click (for mobile)
               var cancelMousedownTimeout;
               var mousedownStartTime = 0;
-              $contentsElm.on('mousedown touchstart', function(event) {
+
+              var downEvent = gridUtil.isTouchEnabled() ? 'touchstart' : 'mousedown';
+              $contentsElm.on(downEvent, function(event) {
+                gridUtil.logDebug('mouse event', event.type);
+
+                event.stopPropagation();
+
                 if (typeof(event.originalEvent) !== 'undefined' && event.originalEvent !== undefined) {
                   event = event.originalEvent;
                 }
@@ -160,19 +166,20 @@
                   }
                 });
               });
-      
-              $contentsElm.on('mouseup touchend', function () {
+        
+              var upEvent = gridUtil.isTouchEnabled() ? 'touchend' : 'mouseup';
+              $contentsElm.on(upEvent, function () {
                 $timeout.cancel(cancelMousedownTimeout);
               });
   
               $scope.$on('$destroy', function () {
                 $contentsElm.off('mousedown touchstart');
-              });              
+              });
             }
 
 
-            $scope.toggleMenu = function($event) {
-              $event.stopPropagation();
+            $scope.toggleMenu = function(event) {
+              event.stopPropagation();
     
               // If the menu is already showing...
               if (uiGridCtrl.columnMenuScope.menuShown) {
@@ -196,8 +203,11 @@
     
             // If this column is sortable, add a click event handler
             if ($scope.sortable) {
-              $contentsElm.on('click touchend', function(evt) {
-                evt.stopPropagation();
+              var clickEvent = gridUtil.isTouchEnabled() ? 'touchend' : 'click';
+              $contentsElm.on(clickEvent, function(event) {
+                gridUtil.logDebug('mouse event 2', event.type);
+
+                event.stopPropagation();
     
                 $timeout.cancel(cancelMousedownTimeout);
     
@@ -205,11 +215,13 @@
                 var mousedownTime = mousedownEndTime - mousedownStartTime;
     
                 if (mousedownTime > mousedownTimeout) {
+                  gridUtil.logDebug('long click');
                   // long click, handled above with mousedown
                 }
                 else {
                   // short click
-                  handleClick(evt);
+                  gridUtil.logDebug('short click');
+                  handleClick(event);
                 }
               });
     
